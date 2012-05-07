@@ -28,8 +28,8 @@ if (file_exists($extras_file)) {
 	output('/* Custom nodes, not on werelate.org */');
 	output('node [shape=note]');
 	output(file_get_contents($extras_file));
-	output('}');
 }
+output('}');
 
 // Generate final formats
 echo "Generating PDF and SVG formats.\n";
@@ -49,14 +49,14 @@ function ancestors($name) {
 	
 	$family_title = $person->child_of_family['title'];
 	if (empty($family_title)) return;
-	output( cleanname($family_title, '_').' -> '.cleanname($name, '_')."\n" );
+	output( cleanname($family_title, '_').' -> '.cleanname($name, '_') );
 	
 	$family = get_page($family_title, 'family');
 	if (!$family) return;
 	get_family($family_title, $family);
 	
-	if ($family->husband['title']) output(cleanname($family->husband['title'], '_').' -> '.cleanname($family_title, '_')."\n");
-	if ($family->wife['title']) output(cleanname($family->wife['title'], '_').' -> '.cleanname($family_title, '_')."\n");
+	if ($family->husband['title']) output(cleanname($family->husband['title'], '_').' -> '.cleanname($family_title, '_').' [color="black:black"]' );
+	if ($family->wife['title']) output(cleanname($family->wife['title'], '_').' -> '.cleanname($family_title, '_').' [color="black:black"]' );
 	
 	if ($family->husband['title']) ancestors($family->husband['title']);
 	if ($family->wife['title']) ancestors($family->wife['title']);
@@ -72,7 +72,7 @@ function descendents($name) {
 	
 	$family_title = $person->spouse_of_family['title'];
 	if (empty($family_title)) return;
-	output( cleanname($name, '_').' -> '.cleanname($family_title, '_')."\n" );
+	output( cleanname($name, '_').' -> '.cleanname($family_title, '_').' [color="black:black"]' );
 	
 	$family = get_page($family_title, 'family');
 	if (!$family) return;
@@ -80,34 +80,49 @@ function descendents($name) {
 	
 	foreach ($family->child as $child) {
 		if ($child['title']!=$name) {
-			output( cleanname($family_title)." -> ".cleanname($child['title'])."\n" );
+			output( cleanname($family_title)." -> ".cleanname($child['title']) );
 			descendents($child['title']);
 		}
 	}
 }
 
 function get_person($name, $person) {
-	$facts = '';
+	//$facts = '';
+	$birth = '';
+	$death = '';
 	foreach ($person->event_fact as $fact)
 	{
-		$facts .= '<BR/>'.$fact['type'].': '.$fact['date'];
-		if (!empty($fact['place'])) $facts .= ', '.$fact['place'];
-		if ($fact['desc']) $facts .= ' ('.$fact['desc'].')';
+		if (empty($birth)) {
+			$birth = ($fact['type']=='Birth') ? $fact['date'] : '';
+		}
+		if (empty($death)) {
+			$death = ($fact['type']=='Death') ? $fact['date'] : '';
+		}
 	}
-	$out = cleanname($name)." [label=<".$person->name['given']." ".$person->name['surname'].$facts.">, URL=\"http://werelate.org/wiki/Person:$name\", shape=box]\n";
+	// Get marriage
+	$marriage = '';
+	$family_title = $person->spouse_of_family['title'];
+	if (!empty($family_title)) {
+		$family = get_page($family_title, 'family');
+		if ($family) {
+			foreach ($family->event_fact as $fact)
+			{
+				if (empty($marriage)) {
+					$marriage = ($fact['type']=='Marriage') ? $fact['date'] : '';
+				}
+			}
+		}
+	}
+	// Output person node
+	$out = cleanname($name)." [label=<".$person->name['given']." ".$person->name['surname']
+		."<BR align=\"left\"/>b. $birth<BR align=\"left\"/>m. $marriage"
+		."<BR align=\"left\"/>d. $death<BR align=\"left\"/>>, "
+		."URL=\"http://werelate.org/wiki/Person:$name\", shape=box, ]\n";
 	output($out);
 }
 
 function get_family($family_title, $family) {
-	$facts = '';
-	foreach ($family->event_fact as $fact)
-	{
-		$date = empty($fact['date']) ? 'Date unknown' : $fact['date'];
-		$facts .= '<BR/>'.$fact['type'].': '.$date;
-		if (!empty($fact['place'])) $facts .= ', '.$fact['place'];
-		if ($fact['desc']) $facts .= ' ('.$fact['desc'].')';
-	}
-	output(cleanname($family_title, '_')." [label=<$facts>, URL=\"http://werelate.org/wiki/Family:$family_title\", shape=ellipse]\n");
+	output(cleanname($family_title, '_')." [label=\"\" URL=\"http://werelate.org/wiki/Family:$family_title\", shape=\"point\"]");
 }
 
 function output($line) {
