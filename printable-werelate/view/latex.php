@@ -9,7 +9,6 @@ class View_LaTeX {
     public function __construct($base_filename, $werelate) {
         $this->werelate = $werelate;
         $this->tex_filename = $base_filename.'.tex';
-        echo "Writing book to $this->tex_filename\n";
     }
     
     public function add_person($name, $person) {
@@ -20,6 +19,7 @@ class View_LaTeX {
         ksort($this->people);
         $out = '
 \documentclass[a4paper,twocolumn,10pt]{book}
+\usepackage[T1]{fontenc}
 \renewcommand{\thesection}{\arabic{section}}
 \setcounter{secnumdepth}{0}
 \title{Family History}
@@ -53,7 +53,8 @@ class View_LaTeX {
             if (count($person->event_fact) > 0) {
                 //$out .= "\begin{description}";
                 foreach ($person->event_fact as $fact) {
-                    $out .= "\n".'\textbf{'.$fact['type'].':} '.$fact['date'];
+                    $out .= "\n".'\textbf{'.$fact['type'].':} ';
+                    $out .= (!empty($fact['date'])) ? $fact['date'] : 'Date unknown';
                     if (!empty($fact['place'])) $out .= ', '.$fact['place'];
                     if ($fact['desc']) $out .= ' ('.$fact['desc'].')';
                     $out .= '. ';
@@ -82,15 +83,24 @@ class View_LaTeX {
             
             // Biography
             //var_dump($person->page_body); exit();
-            $out .= "\n\n".$person->page_body;
+            $out .= "\n\n".$this->tex_esc($person->page_body);
             
         }
         $out .= "
 \end{document}
 ";
+        echo "Writing book to $this->tex_filename\n";
         file_put_contents($this->tex_filename, $out);
         $pdflatex_cmd = "pdflatex -output-dir=".dirname($this->tex_filename)." $this->tex_filename";
-        exec("$pdflatex_cmd; $pdflatex_cmd"); // Twice, for x-refs.
+        echo "Generating PDF.\n";
+        system("$pdflatex_cmd; $pdflatex_cmd; $pdflatex_cmd"); // Thrice, for x-refs.
+    }
+
+    public function tex_esc($str)
+    {
+        $pat = array('/\\\(\s)/', '/\\\(\S)/', '/&/', '/%/', '/\$/', '/>>/', '/_/', '/\^/', '/#/', '/"(\s)/', '/"(\S)/');
+        $rep = array('\textbackslash\ $1', '\textbackslash $1', '\&', '\%', '\textdollar ', '\textgreater\textgreater ', '\_', '\^', '\#', '\textquotedbl\ $1', '\textquotedbl $1');
+        return preg_replace($pat, $rep, $str);
     }
     
 }

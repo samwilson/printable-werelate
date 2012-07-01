@@ -63,7 +63,7 @@ class Model_WeRelate {
         $xml = substr($page_text, $start_pos, $end_pos + strlen($close_tag));
         $obj = new SimpleXMLElement($xml);
         $body = substr($page_text, $end_pos + strlen($close_tag));
-        $obj->addChild('page_body', strip_tags($body));
+        $obj->addChild('page_body', htmlentities(strip_tags($body)));
         return $obj;
     }
 
