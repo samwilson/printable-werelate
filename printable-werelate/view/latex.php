@@ -56,7 +56,7 @@ class View_LaTeX {
                     $out .= "\n".'\textbf{'.$fact['type'].':} ';
                     $out .= (!empty($fact['date'])) ? $fact['date'] : 'Date unknown';
                     if (!empty($fact['place'])) $out .= ', '.$fact['place'];
-                    if ($fact['desc']) $out .= ' ('.$fact['desc'].')';
+                    if ($fact['desc']) $out .= ' ('.$this->tex_esc($fact['desc']).')';
                     $out .= '. ';
                 }
                 //$out .= "\n".'\end{description}'."\n";
