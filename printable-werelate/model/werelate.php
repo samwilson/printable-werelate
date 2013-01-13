@@ -35,10 +35,11 @@ class Model_WeRelate {
             curl_setopt($curl, CURLOPT_FILETIME, true); // Modification date
             $result = curl_exec($curl);
             if ($result === false) die(curl_error($curl));
+            // CURLINFO_FILETIME - Remote time of the retrieved document, if -1 is returned the time of the document is unknown 
             $timestamp = curl_getinfo($curl, CURLINFO_FILETIME);
             
             // If recently modified, fetch new version
-            if ($timestamp > $file_timestamp) {
+            if ($timestamp > $file_timestamp || $timestamp == -1) {
                 echo "\nRetrieving new data for $name.\n";
                 $page_text = file_get_contents($url);
                 file_put_contents($cache_filename, $page_text);

@@ -18,8 +18,9 @@ class View_LaTeX {
     public function to_file() {
         ksort($this->people);
         $out = '
-\documentclass[a4paper,twocolumn,10pt]{book}
+\documentclass[a4paper,10pt]{book}
 \usepackage[T1]{fontenc}
+\usepackage{url}
 \renewcommand{\thesection}{\arabic{section}}
 \setcounter{secnumdepth}{0}
 \title{Family History}
@@ -50,17 +51,7 @@ class View_LaTeX {
             }
             
             // Events and Facts
-            if (count($person->event_fact) > 0) {
-                //$out .= "\begin{description}";
-                foreach ($person->event_fact as $fact) {
-                    $out .= "\n".'\textbf{'.$fact['type'].':} ';
-                    $out .= (!empty($fact['date'])) ? $fact['date'] : 'Date unknown';
-                    if (!empty($fact['place'])) $out .= ', '.$fact['place'];
-                    if ($fact['desc']) $out .= ' ('.$this->tex_esc($fact['desc']).')';
-                    $out .= '. ';
-                }
-                //$out .= "\n".'\end{description}'."\n";
-            }
+            $out .= $this->get_fact_list($person);
             
             // Children
             $family_title = $person->spouse_of_family['title'];
@@ -86,21 +77,72 @@ class View_LaTeX {
             $out .= "\n\n".$this->tex_esc($person->page_body);
             
         }
-        $out .= "
+        $out .= '
 \end{document}
-";
+';
         echo "Writing book to $this->tex_filename\n";
         file_put_contents($this->tex_filename, $out);
         $pdflatex_cmd = "pdflatex -output-dir=".dirname($this->tex_filename)." $this->tex_filename";
         echo "Generating PDF.\n";
         system("$pdflatex_cmd; $pdflatex_cmd; $pdflatex_cmd"); // Thrice, for x-refs.
     }
+    
+    private function get_fact_list($person)
+    {
+        $out = '';
+        if (count($person->event_fact) > 0) {
+            
+            // Sources prepared
+            $citations = array();
+            foreach ($person->source_citation as $citation)
+            {
+                // Format citation
+                $cit = '';
+                if ($citation['title']) $cit .= '\emph{'.$this->tex_esc($citation['title']).'} ';
+                if ($citation['record_name']) $cit .= '``'.$this->tex_esc($citation['record_name'])."'' ";
+                $cit .= $this->tex_esc((string)$citation);
+                // Save it for later use
+                $citations[(string)$citation['id']] = $cit;
+            }
+            
+            // Facts
+            foreach ($person->event_fact as $fact) {
+                $out .= "\n".'\textbf{'.$fact['type'].':} ';
+                $out .= (!empty($fact['date'])) ? $fact['date'] : 'Date unknown';
+                if (!empty($fact['place'])) $out .= ', '.$fact['place'];
+                if ($fact['desc']) $out .= ' ('.$this->tex_esc($fact['desc']).')';
+                $out .= '.';
+                // Output sources
+                if ($fact['sources'])
+                {
+                    $sources = explode(',', $fact['sources']);
+                    foreach ($sources as $source)
+                    {
+                        $out .= '\footnote{'.$citations[$source].'} ';
+                    }
+                }
+            }
+        }
+        return $out;
+    }
 
     public function tex_esc($str)
     {
-        $pat = array('/\\\(\s)/', '/\\\(\S)/', '/&/', '/%/', '/\$/', '/>>/', '/_/', '/\^/', '/#/', '/"(\s)/', '/"(\S)/');
-        $rep = array('\textbackslash\ $1', '\textbackslash $1', '\&', '\%', '\textdollar ', '\textgreater\textgreater ', '\_', '\^', '\#', '\textquotedbl\ $1', '\textquotedbl $1');
-        return preg_replace($pat, $rep, $str);
+        $patterns = array(
+            '/\\\(\s)/' => '\textbackslash\ $1',
+            '/\\\(\S)/' =>  '\textbackslash $1',
+            '/&/'       => '\&',
+            '/%/'       => '\%',
+            '/\$/'      => '\textdollar ',
+            '/>>/'      =>  '\textgreater\textgreater ',
+            '/\^/'      => '\^',
+            '/#/'       => '\#',
+            '/"(\s)/'   => '\textquotedbl\ $1',
+            '/"(\S)/'   =>  '\textquotedbl $1',
+            '/_/'       =>  '\_',
+            '/http.:\/\/(\S*)/' => '\url{$1}',
+        );
+        return preg_replace(array_keys($patterns), array_values($patterns), $str);
     }
     
 }

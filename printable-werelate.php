@@ -3,40 +3,48 @@ require_once 'printable-werelate/model/werelate.php';
 require_once 'printable-werelate/view/latex.php';
 
 /**
- * This is the Controller. 
+ * This is the Controller.
  */
 class PrintableWeRelate {
-    
+
     private $base_dir;
-    
+
     /**
      * The Model of WeRelate as a whole.
-     * 
-     * @var Model_WeRelate 
+     *
+     * @var Model_WeRelate
      */
     private $werelate;
     
+    /**
+     * The LaTeX view.
+     * 
+     * @var View_LaTeX
+     */
+    private $latex;
+
     private $base_tree_filename;
-    
+
     private $tree_file_lines;
 
     public function __construct() {
-        
+
         $this->base_dir = dirname(__FILE__);
-        
+
         // Base filename for the three output formats (GV, SVG, and PDF).
         $this->base_tree_filename = $this->base_dir.'/tree/Family_Tree_'.date('Y-m-d');
-        
+
         $tree_dir = $this->setup_local_dir('tree');
         $cache_dir = $this->setup_local_dir('cache');
         $book_dir = $this->setup_local_dir('book');
-        
+
         $this->werelate = new Model_WeRelate($cache_dir);
 
         // Start output
         //echo "Starting output for $base_tree_filename\n";
         file_put_contents($this->base_tree_filename.'.gv', ''); // Empty the file.
         $this->output('digraph FamilyTree {');
+        $this->output('graph [rankdir="LR"]');
         $this->output('edge [arrowhead=none]');
         $this->latex = new View_LaTeX($book_dir.'/Family_History_'.date('Y-m-d'), $this->werelate);
 
@@ -68,7 +76,7 @@ class PrintableWeRelate {
         exec("dot -Tsvg -o $this->base_tree_filename.svg $this->base_tree_filename.gv");
 
     }
-    
+
     private function setup_local_dir($dirname) {
         $dirpath = $this->base_dir.'/'.$dirname;
         if (!file_exists($dirname)) {
@@ -82,7 +90,7 @@ class PrintableWeRelate {
         }
         return $dirpath;
     }
-    
+
     /**
     * Output all ancestors of the given person, recursing upwards.
     */
@@ -162,12 +170,12 @@ class PrintableWeRelate {
              ."<BR align=\"left\"/>d. $death<BR align=\"left\"/>>, "
              ."URL=\"http://werelate.org/wiki/Person:$name\", shape=box, ]\n";
         $this->output($out);
-        
+
     }
 
     function get_family($family_title, $family) {
         $this->output($this->cleanname($family_title, '_')." [label=\"\" URL=\"http://werelate.org/wiki/Family:$family_title\", shape=\"point\"]");
-        
+
         // Husband and Wife
         foreach (array('husband','wife') as $spouse) {
             $spouse = $family->$spouse;
