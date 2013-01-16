@@ -26,6 +26,24 @@ class View_LaTeX {
 \title{Family History}
 \begin{document}
 \maketitle
+
+\newpage
+\null\vspace{\fill}
+
+\thispagestyle{empty}
+\begin{center}
+Copyright \copyright\ WeRelate contributors
+
+\vspace{1cm}
+
+This book comprises information compiled by the contributors to \url{http://www.WeRelate.org},
+and is licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License.
+To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/3.0/}
+\end{center}
+
+\vspace{\fill}
+\newpage
+
 \tableofcontents
 ';
         // People

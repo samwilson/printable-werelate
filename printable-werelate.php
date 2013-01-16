@@ -67,6 +67,9 @@ class PrintableWeRelate {
             $this->output('node [shape=note]');
             $this->output(file_get_contents($extras_file));
         }
+        
+        $this->output('label=<Copyright &copy; WeRelate contributors http://www.werelate.org/
+            Licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License http://creativecommons.org/licenses/by-sa/3.0/ >');
         $this->output('}');
         $this->latex->to_file();
 
