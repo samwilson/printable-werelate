@@ -70,7 +70,7 @@ class PrintableWeRelate {
         
         $this->output('label=<Copyright &copy; WeRelate contributors http://www.werelate.org/
             Licensed under a Creative Commons Attribution-ShareAlike 3.0 Unported License http://creativecommons.org/licenses/by-sa/3.0/ >');
-        $this->output('}');
+        $this->output('}', true);
         $this->latex->to_file();
 
         // Generate final formats
@@ -177,7 +177,11 @@ class PrintableWeRelate {
     }
 
     function get_family($family_title, $family) {
-        $this->output($this->cleanname($family_title, '_')." [label=\"\" URL=\"http://werelate.org/wiki/Family:$family_title\", shape=\"point\"]");
+        $clean_family_title = $this->cleanname($family_title, '_');
+        $this->output('subgraph cluster_'.$clean_family_title.' {', true);
+        $this->output('style="invis"', true);
+        $url = 'http://werelate.org/wiki/Family:'.$family_title;
+        $this->output($clean_family_title.' [label="" URL="'.$url.'",shape="point",height="0"]');
 
         // Husband and Wife
         foreach (array('husband','wife') as $spouse) {
@@ -187,16 +191,17 @@ class PrintableWeRelate {
                 $person = $this->werelate->get_page($spouse_name, 'person');
                 if ($person) {
                     $this->get_person($spouse_name, $person);
-                    $this->output($this->cleanname($spouse_name, '_').' -> '.$this->cleanname($family_title, '_').' [color="black:black"]' );
+                    $this->output($this->cleanname($spouse_name, '_').' -> '.$clean_family_title.' [penwidth="3"]' );
                 }
             }
         }
+        $this->output('}', true);
     }
 
-    function output($line) {
+    function output($line, $permit_dupes = false) {
         if (substr($line, -1)!="\n") $line .= "\n"; // Needs a newline?
         if (!is_array($this->tree_file_lines)) $this->tree_file_lines = array();
-        if (!in_array($line, $this->tree_file_lines)) {
+        if (!in_array($line, $this->tree_file_lines) || $permit_dupes) {
             file_put_contents($this->base_tree_filename.'.gv', $line, FILE_APPEND);
             $this->tree_file_lines[] = $line;
         }
