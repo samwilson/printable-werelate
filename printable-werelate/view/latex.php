@@ -6,12 +6,16 @@ class View_LaTeX {
     
     private $people = array();
     
+    /** @var Model_WeRelate */
+    private $werelate;
+    
     public function __construct($base_filename, $werelate) {
         $this->werelate = $werelate;
         $this->tex_filename = $base_filename.'.tex';
     }
     
     public function add_person($name, $person) {
+        $name = $person->name['surname'].', '.$person->name['given'];
         $this->people[PrintableWeRelate::cleanname($name)] = $person;
     }
     
@@ -49,7 +53,7 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         // People
         $out .= "\n\chapter{People}\n";
         foreach ($this->people as $name => $person) {
-            $full_name = $person->name['given']." ".$person->name['surname'];
+            $full_name = $person->name['surname'].', '.$person->name['given'];
             $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate::cleanname($name).'}'."\n";
             
             // Parents
