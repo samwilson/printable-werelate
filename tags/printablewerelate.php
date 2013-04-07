@@ -1,0 +1,59 @@
+<?php
+
+//<form action="">
+//    <fieldset>
+//        <legend>Printable WeRelate</legend>
+//        
+//    </fieldset>
+//</form>
+
+require_once __DIR__.'/../TreeTraversal.php';
+
+class PrintableWeRelate_Tags_printablewerelate {
+
+    protected $tag_name = 'printablewerelate';
+
+    protected $ancestors = array();
+
+    protected $descendants = array();
+
+    public function __construct($text) {
+        $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($text, 'printablewerelate');
+        foreach (array('ancestor', 'descendant') as $dir) {
+            foreach ($pwr->$dir as $person) {
+                $dirPlural = $dir.'s';
+                $this->{$dirPlural}[] = (string) $person;
+            }
+        }
+    }
+
+    public function getAncestors() {
+        return $this->ancestors;
+    }
+
+    public function getDescendants() {
+        return $this->descendants;
+    }
+
+    public function toHtml(Title $listPage) {
+        $out = '';
+        if (count($this->ancestors)>0) {
+            $out .= '<p><strong>Ancestors:</strong></p><ul>';
+            foreach ($this->getAncestors() as $ancestor) {
+                $title = Title::newFromText($ancestor);
+                $out .= '<li>'.Linker::link($title).'</li>';
+            }
+            $out .= '</ul>';
+        }
+        if (count($this->descendants)>0) {
+            $out .= '<p><strong>Descendants:</strong></p><ul>';
+            foreach ($this->getDescendants() as $descendant) {
+                $title = Title::newFromText($descendant);
+                $out .= '<li>'.Linker::link($title).'</li>';
+            }
+            $out .= '</ul>';
+        }
+        $link = Linker::specialLink('PrintableWeRelate/'.$listPage->getPrefixedURL(), 'Download');
+        return "$out <p>$link</p>";
+    }
+}

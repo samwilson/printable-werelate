@@ -1,61 +1,55 @@
 Printable WeRelate
 ==================
 
-This is small PHP script for extracting data from the collaborative
-wiki-based genealogy site
-[WeRelate.org](http://www.werelate.org/wiki/WeRelate:About)
-and building
+This is a MediaWiki extension for backing up genealogical data
+from the collaborative wiki-based genealogy site
+[WeRelate.org](http://www.werelate.org/wiki/WeRelate:About), and building
 
 1. a GraphViz-generated family tree; and
-2. a LaTex-formatted book compilation of all people
+2. a LaTex-formatted book compilation of all data,
 
 both suitable for printing.
 
 Please note that the code here is not brilliant, but it serves its purpose well
 enough for now.  If you find any problems, please lodge a bug report on
-GitHub: https://github.com/samwilson/printable-werelate/issues
+GitHub: https://github.com/samwilson/printable-werelate/issues or come along to
+[WeRelate.org](http://www.werelate.org/wiki/WeRelate:Printable-WeRelate) and
+let us know that you're using this extension.
 
-Dependencies
+The main reason for refactoring this as an extension (in April 2013) was to be
+able to use a MediaWiki installation basically as a caching device, to better
+separate the syncronisation process form the tree- and book-generation process.
+
+Requirements
 ------------
 
-* PHP with cURL and SimpleXML.
+* MediaWiki (and its [requirements](http://www.mediawiki.org/wiki/Manual:Installation_requirements))
+* PHP with SimpleXML.
 * GraphViz (i.e. the `dot` command).
 * LaTeX (i.e. the `pdflatex` command) with `fontenc` and `url` packages.
 
-Configuration Files
--------------------
+Installation
+------------
 
-__`ancestors.txt` and `descendents.txt`__
+As usual for MediaWiki extensions: move to the `extensions` directory, and put
+the following in `LocalSettings.php`:
 
-Simple text files listing the root nodes of the tree.  People listed in
-the former will have all of their ancestors included in the tree, and
-the latter, all their descendents.  There should be one name per line,
-with the names matching what is shown at the top of 'Person' pages on
-WeRelate with the prefix removed.  For example: "William Munday (1)"
-rather than "Person:William Munday (1)".
-
-Lines in these files can be commented out with a `#` character at the start of
-the line.
-
-__`extras.gv`__
-
-Contents of this file are appended to the final generated tree, as a means to
-add people who are still living and so not on WeRelate. Do not include the full
-graph syntax, but only the body.  Check the generated graph for node names, to
-tie nodes in `extras.gv` into the rest.
+    require_once "$IP/extensions/PrintableWeRelate/PrintableWeRelate.php";
 
 Usage
 -----
 
-Create at least one of the above configuration files, and then run:
+*1.*
 
-    php printable-werelate.php
+Add a <printablewerelate> element on any wiki page, and point sync.php to it:
 
-(And then complain on GitHub when something goes wrong!)
+    php extensions/PrintableWeRelate/sync.php --page User:Someone/sync
 
-Three directories will be created in the script's directory: `tree`, `book`, and
-`cache`.  The first two contain the tree and book formats, and the latter keeps
-the cached pages for future invocations of the script.
+This will download all required data (including uploaded files) from werelate.org.
+
+*2.*
+
+Then, click the download link that is shown on the page with the <printablewerelate> element.
 
 Development
 -----------

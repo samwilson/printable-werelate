@@ -1,0 +1,129 @@
+<?php
+
+class PrintableWeRelate_TreeTraversal {
+
+    private $callbacks;
+
+    public function __construct() {
+        
+    }
+
+    /**
+     * Callbacks will be called for each page crawled.
+     * 
+     * @param callable $callback The callable function etc.
+     */
+    public function registerCallback($callback) {
+        $this->callbacks[] = $callback;
+    }
+
+    /**
+     * Output all ancestors of the given person, recursing upwards.
+     */
+    function ancestors($name) {
+
+        $person = $this->get_person($name);
+        if (!$person) {
+            return false;
+        }
+        //var_dump($person);exit();
+
+        $family_title = $person->child_of_family['title'];
+        if (empty($family_title)) {
+            return false;
+        }
+
+        $family = $this->get_page($family_title, 'family');
+        if (!$family) {
+            return false;
+        }
+
+        if ($family->husband['title']) {
+            $this->ancestors($family->husband['title']);
+        }
+        if ($family->wife['title']) {
+            $this->ancestors($family->wife['title']);
+        }
+
+        return $person;
+    }
+
+    function descendents($name) {
+
+        $person = $this->get_person($name);
+        if (!$person) {
+            return false;
+        }
+
+        $family_title = $person->spouse_of_family['title'];
+        if (empty($family_title)) {
+            return false;
+        }
+
+        $family = $this->get_page($family_title, 'family');
+        if (!$family) {
+            return false;
+        }
+
+        foreach ($family->child as $child) {
+            if ($child['title'] != $name) {
+                $this->descendents($child['title']);
+            }
+        }
+    }
+    
+    public function get_person($name) {
+        $person = $this->get_page($name, 'person');
+        if (!$person || !$person->name) {
+            return false;
+        }
+
+        // Images
+        if (isset($person->image)) {
+            foreach ($person->image as $image) {
+                $id = isset($image['id']) ? $image['id'] : '';
+                $filename = isset($image['filename']) ? $image['filename'] : '';
+                $this->get_page($filename, 'image');
+            }
+        }
+
+        // Source Citations @TODO
+
+        return $person;
+    }
+
+    public function get_page($name, $tag) {
+        $title = Title::newFromText(ucwords($tag).':'.$name);
+
+        // Call each callback
+        foreach ($this->callbacks as $callback) {
+            call_user_func($callback, $title);
+        }
+
+        // Construct SimpleXML object
+        $page = WikiPage::factory($title);
+        if (!$page->exists()) {
+            return false;
+        }
+        $page_text = $page->getText();
+        $object = $this->pageTextToObj($page_text, $tag);
+
+        return $object;
+    }
+
+    static function pageTextToObj($page_text, $tag) {
+        // Parse XML out of raw page text.
+        $close_tag = "</$tag>";
+        $start_pos = stripos($page_text, "<$tag>");
+        $end_pos = stripos($page_text, $close_tag);
+        if ($start_pos === FALSE OR $end_pos === FALSE) {
+            return FALSE;
+        }
+        $xml = substr($page_text, $start_pos, $end_pos + strlen($close_tag));
+        $obj = new SimpleXMLElement($xml);
+        //$body = substr($page_text, $end_pos + strlen($close_tag));
+        //$obj->addChild('page_body', htmlentities(strip_tags($body)));
+        return $obj;
+    }
+
+}
