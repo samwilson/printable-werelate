@@ -14,9 +14,10 @@ class View_LaTeX {
         $this->tex_filename = $base_filename.'.tex';
     }
     
-    public function add_person($name, $person) {
+    public function add_person($title, $person) {
+        $person->title = $title;
         $name = $person->name['surname'].', '.$person->name['given'];
-        $this->people[PrintableWeRelate::cleanname($name)] = $person;
+        $this->people[PrintableWeRelate::cleanname($name.$title)] = $person;
     }
     
     public function to_file() {
@@ -25,6 +26,8 @@ class View_LaTeX {
 \documentclass[a4paper,10pt]{book}
 \usepackage[T1]{fontenc}
 \usepackage{url}
+\usepackage{graphicx}
+\usepackage[hidelinks,unicode]{hyperref}
 \renewcommand{\thesection}{\arabic{section}}
 \setcounter{secnumdepth}{0}
 \title{Family History}
@@ -54,7 +57,22 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         $out .= "\n\chapter{People}\n";
         foreach ($this->people as $name => $person) {
             $full_name = $person->name['surname'].', '.$person->name['given'];
-            $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate::cleanname($name).'}'."\n";
+            $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate::cleanname($person->title).'}'."\n";
+            
+            // Primary Image
+            foreach ($person->image as $image) {
+                if (isset($image['primary']) && substr($image['filename'], -3)=='jpg') {
+                    $image_filename = $this->werelate->get_image($image['filename']);
+                    $cleanname = PrintableWeRelate::cleanname($image['filename']);
+                    $out .= '\begin{figure}'."\n"
+                        .'\centering'."\n"
+                        .'\includegraphics[width=0.6\textwidth]{'.$image_filename.'}'."\n"
+                        .'\caption{'.$person->name['given'].' '.$person->name['surname'].'}'."\n"
+                        .'\label{'.$cleanname.'}'."\n"
+                        .'\end{figure}'."\n";
+                    $this->images[] = $cleanname;
+                }
+            }
             
             // Parents
             $family_title = $person->child_of_family['title'];
@@ -66,7 +84,11 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
                         if ($spouse['title']) {
                             $spouse_obj = $this->werelate->get_page($spouse['title'], 'person');
                             $full_name = $spouse_obj->name['given']." ".$spouse_obj->name['surname'];
-                            $out .= '\textbf{'.$parent.':} '.$full_name.' (p.\pageref{'.PrintableWeRelate::cleanname($spouse['title']).'}). ';
+                            $out .= '\textbf{'.$parent.':} '.$full_name.' ';
+                            $spouse_title = PrintableWeRelate::cleanname($spouse['title']);
+                            if (isset($this->people[$spouse_title])) {
+                                $out .= '(p.\pageref{'.$spouse_title.'}). ';
+                            }
                         }
                     }
                 }
@@ -97,6 +119,15 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
             // Biography
             //var_dump($person->page_body); exit();
             $out .= "\n\n".$this->tex_esc($person->page_body);
+            
+            // Other images
+            $images = '';
+            foreach ($person->image as $image) {
+                $images .= $this->get_image($image['filename'], $image['caption']);
+            }
+            if (!empty($images)) {
+                $out .= "\n\n".' \textbf{Images:} '.$images.' ';
+            }
             
         }
         $out .= '
@@ -166,5 +197,32 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         );
         return preg_replace(array_keys($patterns), array_values($patterns), $str);
     }
-    
+
+    public function get_image($filename, $caption) {
+        $out = '';
+        $cleanname = PrintableWeRelate::cleanname($filename);
+        $caption = $this->tex_esc($caption);
+        if (!empty($caption) && substr($caption, -1) != '.') {
+            $caption = $caption.'.';
+        }
+        if (substr($filename, -3)=='jpg' && !in_array($cleanname, $this->images)) {
+            
+            $image_filename = $this->werelate->get_image($filename);
+            //$filename = ;
+
+            $out .= '\begin{figure}'."\n"
+                .'\centering'."\n"
+                .'\includegraphics[width=0.6\textwidth]{'.$image_filename.'}'."\n";
+            if (!empty($caption)) {
+                $out .= '\caption{'.$caption.'}'."\n";
+            }
+            $out .= '\label{'.$cleanname.'}'."\n"
+                .'\end{figure}'."\n";
+            $this->images[] = $cleanname;
+        }
+        if (substr($filename, -3) == 'jpg') {
+            $out .= 'Fig. \ref{'.$cleanname.'} (p.\pageref{'.$cleanname.'}): '.$caption."\n";
+        }
+        return $out;
+    }
 }

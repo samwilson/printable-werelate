@@ -36,6 +36,7 @@ class PrintableWeRelate {
 
         $tree_dir = $this->setup_local_dir('tree');
         $cache_dir = $this->setup_local_dir('cache');
+        $this->setup_local_dir('cache/images');
         $book_dir = $this->setup_local_dir('book');
 
         $this->werelate = new Model_WeRelate($cache_dir);
@@ -46,6 +47,7 @@ class PrintableWeRelate {
         $this->output('digraph FamilyTree {');
         $this->output('graph [rankdir="LR"]');
         $this->output('edge [arrowhead=none]');
+        
         $this->latex = new View_LaTeX($book_dir.'/Family_History_'.date('Y-m-d'), $this->werelate);
 
         // Output all required people and families.
