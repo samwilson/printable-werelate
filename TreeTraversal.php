@@ -48,7 +48,7 @@ class PrintableWeRelate_TreeTraversal {
         return $person;
     }
 
-    function descendents($name) {
+    function descendants($name) {
 
         $person = $this->get_person($name);
         if (!$person) {
@@ -67,7 +67,7 @@ class PrintableWeRelate_TreeTraversal {
 
         foreach ($family->child as $child) {
             if ($child['title'] != $name) {
-                $this->descendents($child['title']);
+                $this->descendants($child['title']);
             }
         }
     }

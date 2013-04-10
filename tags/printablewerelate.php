@@ -19,10 +19,9 @@ class PrintableWeRelate_Tags_printablewerelate {
 
     public function __construct($text) {
         $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($text, 'printablewerelate');
-        foreach (array('ancestor', 'descendant') as $dir) {
+        foreach (array('ancestors', 'descendants') as $dir) {
             foreach ($pwr->$dir as $person) {
-                $dirPlural = $dir.'s';
-                $this->{$dirPlural}[] = (string) $person;
+                $this->{$dir}[] = (string) $person;
             }
         }
     }

@@ -6,7 +6,7 @@ $wgExtensionCredits['other'][] = array(
     'name' => 'PrintableWeRelate',
     'author' => "Sam Wilson <[mailto:sam@samwilson.id.au sam@samwilson.id.au]>",
     'url' => "http://www.werelate.org/wiki/WeRelate:Printable-WeRelate",
-    'description' => "A system for backing up and printing genealogical data from [http://www.werelate.org werelate.org].",
+    'descriptionmsg' => 'printablewerelate-desc',
     'version' => 2.0,
 );
 
@@ -16,7 +16,9 @@ $tags = new PrintableWeRelateTags();
 $wgHooks['ParserFirstCallInit'][] = array($tags, 'init');
 
 
+$wgExtensionMessagesFiles['PrintableWeRelate'] = __DIR__ . '/PrintableWeRelate.i18n.php';
 $wgAutoloadClasses['SpecialPrintableWeRelate'] = __DIR__.'/Special.php';
+$wgAutoloadClasses['PrintableWeRelate_TreeTraversal'] = __DIR__.'/TreeTraversal.php';
 $wgAutoloadClasses['PrintableWeRelate_Tags_printablewerelate'] = __DIR__.'/tags/printablewerelate.php';
 
 $wgSpecialPages['PrintableWeRelate'] = 'SpecialPrintableWeRelate';
@@ -32,8 +34,6 @@ class PrintableWeRelateTags {
     public static function printablewerelate( $input, array $args, Parser $parser, PPFrame $frame ) {
         $rewrapped = "<printablewerelate>$input</printablewerelate>";
         $pwr = new PrintableWeRelate_Tags_printablewerelate($rewrapped);
-        //$pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($input, 'printablewerelate');
-        //return htmlspecialchars( $input );
         $title = $parser->getTitle();
         return $pwr->toHtml($title);
     }

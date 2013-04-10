@@ -28,7 +28,7 @@ class PrintableWeRelateSync extends Maintenance {
         // Traverse up and down from the supplied links.
         $werelate = new PrintableWeRelate_TreeTraversal();
         $werelate->registerCallback(array($this, 'UpdateFromRemote'));
-        foreach (array('ancestor', 'descendant') as $dir) {
+        foreach (array('ancestors', 'descendants') as $dir) {
             foreach ($pwr->$dir as $person) {
                 $dirPlural = $dir.'s';
                 $this->output("Traversing all $dirPlural of $person.\n\n");
