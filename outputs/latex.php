@@ -1,29 +1,50 @@
 <?php
 
-class View_LaTeX {
-    
-    private $tex_filename;
-    
+class PrintableWeRelate_LaTeX {
+
+    private $output_filepath;
+    private $output_filename;
+
     private $people = array();
-    
-    /** @var Model_WeRelate */
-    private $werelate;
-    
-    public function __construct($base_filename, $werelate) {
-        $this->werelate = $werelate;
-        $this->tex_filename = $base_filename.'.tex';
+
+    /** @var PrintableWeRelate_TreeTraversal */
+    private $tree;
+
+    public function __construct(PrintableWeRelate_TreeTraversal $tree, Title $listPage) {
+        $this->tree = $tree;
+
+        // Construct output location
+        global $wgUploadDirectory;
+        $dest = $wgUploadDirectory.DIRECTORY_SEPARATOR.'printablewerelate';
+        if ( ! is_dir( $dest ) ) { mkdir( $dest, 0777 );} // create directory if it isn't there
+        $this->output_filepath = realpath($dest).DIRECTORY_SEPARATOR;
+         // Clean up pagename (special chars etc)
+        $title = $listPage->getPrefixedURL();
+        $this->output_filename = str_replace( array('\\', '/', ':', '*', '?', '"', '<', '>', "\n", "\r" ), '_', $title );
     }
-    
-    public function add_person($name, $person) {
-        $name = $person->name['surname'].', '.$person->name['given'];
-        $this->people[PrintableWeRelate::cleanname($name)] = $person;
+
+    public function getPeople() {
+        return $this->people;
     }
-    
+
+    public function visitTitle(Title $title) {
+        // Get only people pages
+        if ($title->getNamespace() == NS_PRINTABLEWERELATE_PERSON) {
+            $page = WikiPage::factory($title);
+            $person = PrintableWeRelate_TreeTraversal::pageTextToObj($page->getText(), 'person');
+            if (!$person) {
+                return;
+            }
+            $name = $person->name['surname'].', '.$person->name['given'];
+            $this->people[PrintableWeRelate_cleanname($name)] = $person;
+        }
+    }
+
     public function to_file() {
         ksort($this->people);
         $out = '
 \documentclass[a4paper,10pt]{book}
-\usepackage[T1]{fontenc}
+%\usepackage[T1]{fontenc}
 \usepackage{url}
 \renewcommand{\thesection}{\arabic{section}}
 \setcounter{secnumdepth}{0}
@@ -54,36 +75,36 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         $out .= "\n\chapter{People}\n";
         foreach ($this->people as $name => $person) {
             $full_name = $person->name['surname'].', '.$person->name['given'];
-            $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate::cleanname($name).'}'."\n";
-            
-            // Parents
+            $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate_cleanname($name).'}'."\n";
+
+//            // Parents
             $family_title = $person->child_of_family['title'];
             if (!empty($family_title)) {
-                $family = $this->werelate->get_page($family_title, 'family');
+                $family = $this->tree->getObject((string)$family_title, 'family');
                 if ($family) {
                     foreach (array('Father'=>'husband', 'Mother'=>'wife') as $parent=>$spouse) {
                         $spouse = $family->$spouse;
                         if ($spouse['title']) {
-                            $spouse_obj = $this->werelate->get_page($spouse['title'], 'person');
+                            $spouse_obj = $this->tree->getObject($spouse['title'], 'person');
                             $full_name = $spouse_obj->name['given']." ".$spouse_obj->name['surname'];
-                            $out .= '\textbf{'.$parent.':} '.$full_name.' (p.\pageref{'.PrintableWeRelate::cleanname($spouse['title']).'}). ';
+                            $out .= '\textbf{'.$parent.':} '.$full_name.' (p.\pageref{'.PrintableWeRelate_cleanname($spouse['title']).'}). ';
                         }
                     }
                 }
             }
-            
+
             // Events and Facts
             $out .= $this->get_fact_list($person);
-            
+
             // Children
             $family_title = $person->spouse_of_family['title'];
             if (!empty($family_title)) {
-                $family = $this->werelate->get_page($family_title, 'family');
+                $family = $this->tree->getObject((string)$family_title, 'family');
                 if ($family) {
                     $children = array();
                     foreach ($family->child as $child) {
                         $child_name = $child['given'].' '.$child['surname'];
-                        $child_label = PrintableWeRelate::cleanname($child['title']);
+                        $child_label = PrintableWeRelate_cleanname($child['title']);
                         $child_tex = $child_name;
                         if (isset($this->people[$child_label])) $child_tex .= ' (p.\pageref{'.$child_label.'})';
                         $children[] = $child_tex;
@@ -102,13 +123,23 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         $out .= '
 \end{document}
 ';
-        echo "Writing book to $this->tex_filename\n";
-        file_put_contents($this->tex_filename, $out);
-        $pdflatex_cmd = "pdflatex -output-dir=".dirname($this->tex_filename)." $this->tex_filename";
-        echo "Generating PDF.\n";
-        system("$pdflatex_cmd; $pdflatex_cmd; $pdflatex_cmd"); // Thrice, for x-refs.
+        $tex_filename = $this->output_filepath.$this->output_filename.'.tex';
+        file_put_contents($tex_filename, $out);
+        $pdflatex_cmd = "pdflatex -output-directory=".wfEscapeShellArg(dirname($tex_filename)).' '.wfEscapeShellArg($tex_filename);
+        $shell_out = wfShellExec($pdflatex_cmd);
+        $pdf_filename = $this->output_filepath.$this->output_filename.'.pdf';
+        if (!file_exists($pdf_filename)) {
+            header("Content-type:text/plain");
+            echo $shell_out;
+            echo "\n\nPDF not generated: $pdf_filename\n\nCommand was: $pdflatex_cmd";
+            exit(1);
+        }
+        // Twice more, for crossreferences.
+        wfShellExec($pdflatex_cmd);
+        wfShellExec($pdflatex_cmd);
+        return $this->output_filename;
     }
-    
+
     private function get_fact_list($person)
     {
         $out = '';
@@ -140,7 +171,9 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
                     $sources = explode(',', $fact['sources']);
                     foreach ($sources as $source)
                     {
-                        $out .= '\footnote{'.$citations[$source].'} ';
+                        if (isset($citations[$source])) {
+                            $out .= '\footnote{'.$citations[$source].'} ';
+                        }
                     }
                 }
             }

@@ -100,14 +100,24 @@ class PrintableWeRelate_TreeTraversal {
             call_user_func($callback, $title);
         }
 
-        // Construct SimpleXML object
+        return $this->getObject($title->getPrefixedText(), $tag);
+    }
+
+    /**
+     * Construct SimpleXML object.
+     * 
+     * @param string $title Prefixed page title.
+     * @param string $tag
+     * @return boolean
+     */
+    public function getObject($text_title, $tag) {
+        $title = Title::newFromText($text_title);
         $page = WikiPage::factory($title);
         if (!$page->exists()) {
             return false;
         }
         $page_text = $page->getText();
         $object = $this->pageTextToObj($page_text, $tag);
-
         return $object;
     }
 

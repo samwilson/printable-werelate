@@ -8,8 +8,6 @@ class SpecialPrintableWeRelate extends SpecialPage {
     }
 
     function execute( $sourcePageName ) {
-        $request = $this->getRequest();
-        $output = $this->getOutput();
         $this->setHeaders();
 
         $title = null;
@@ -24,24 +22,31 @@ class SpecialPrintableWeRelate extends SpecialPage {
             }
         }
 
-        $output->addHTML($this->getForm($title));
+        $this->getOutput->addHTML($this->getForm($title));
     }
 
-    protected function buildLatex($page) {
+    protected function buildLatex(WikiPage $page) {
+        global $wgScriptPath;
         // Parse the <printablewerelate> tag.
         $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($page->getText(), 'printablewerelate');
 
-        // Traverse up and down from the supplied links.
-        $werelate = new PrintableWeRelate_TreeTraversal();
-        $werelate->registerCallback(array($this, 'visitNode'));
+        $tree = new PrintableWeRelate_TreeTraversal();
+
+        $latex = new PrintableWeRelate_LaTeX($tree, $page->getTitle());
+
+        //$tree->registerCallback(array($this, 'visitTitle'));
+        $tree->registerCallback(array($latex, 'visitTitle'));
         foreach (array('ancestors', 'descendants') as $dir) {
             foreach ($pwr->$dir as $person) {
-                $werelate->$dir($person);
+                $tree->$dir($person);
             }
         }
+        $filename = $latex->to_file();
+        $link = $wgScriptPath.'/images/printablewerelate/'.$filename.'.pdf';
+        $this->getOutput()->addHTML('<p><a href="'.$link.'">Download PDF</a></p>');
     }
-    
-    public function visitNode(Title $title) {
+
+    public function visitTitle(Title $title) {
         $this->getOutput()->addWikiText('* '.$title->getPrefixedText());
     }
 

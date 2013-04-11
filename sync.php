@@ -30,9 +30,8 @@ class PrintableWeRelateSync extends Maintenance {
         $werelate->registerCallback(array($this, 'UpdateFromRemote'));
         foreach (array('ancestors', 'descendants') as $dir) {
             foreach ($pwr->$dir as $person) {
-                $dirPlural = $dir.'s';
-                $this->output("Traversing all $dirPlural of $person.\n\n");
-                $werelate->$dirPlural($person);
+                $this->output("Traversing all $dir of $person.\n\n");
+                $werelate->$dir($person);
             }
         }
 

@@ -15,14 +15,19 @@ require_once 'init_namespaces.php';
 $tags = new PrintableWeRelateTags();
 $wgHooks['ParserFirstCallInit'][] = array($tags, 'init');
 
-
 $wgExtensionMessagesFiles['PrintableWeRelate'] = __DIR__ . '/PrintableWeRelate.i18n.php';
 $wgAutoloadClasses['SpecialPrintableWeRelate'] = __DIR__.'/Special.php';
 $wgAutoloadClasses['PrintableWeRelate_TreeTraversal'] = __DIR__.'/TreeTraversal.php';
 $wgAutoloadClasses['PrintableWeRelate_Tags_printablewerelate'] = __DIR__.'/tags/printablewerelate.php';
+$wgAutoloadClasses['PrintableWeRelate_LaTeX'] = __DIR__.'/outputs/latex.php';
 
 $wgSpecialPages['PrintableWeRelate'] = 'SpecialPrintableWeRelate';
 
+function PrintableWeRelate_cleanname($str) {
+    $search = array(' ', '-', '(', ')');
+    $replace = array('_');
+    return str_replace($search, $replace, strtolower($str));
+}
 
 class PrintableWeRelateTags {
 
