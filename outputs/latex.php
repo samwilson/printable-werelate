@@ -123,10 +123,27 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         $out .= '
 \end{document}
 ';
+        return $this->generatePdf($out);
+    }
+
+    /**
+     * Generate PDF from given tex source.
+     * 
+     * @param string $out LaTeX source code.
+     * @return string The output filename with no path or file extension.
+     */
+    public function generatePdf($out) {
+        // Clear out old files
+        wfShellExec('rm '.$this->output_filepath.$this->output_filename.'.*');
+        // Save tex file
         $tex_filename = $this->output_filepath.$this->output_filename.'.tex';
         file_put_contents($tex_filename, $out);
-        $pdflatex_cmd = "pdflatex -output-directory=".wfEscapeShellArg(dirname($tex_filename)).' '.wfEscapeShellArg($tex_filename);
+        // Create and execute pdflatex command
+        $pdflatex_cmd = $this->getPdflatexCmd()
+            ." -output-directory=".wfEscapeShellArg(dirname($tex_filename))
+            .' '.wfEscapeShellArg($tex_filename);
         $shell_out = wfShellExec($pdflatex_cmd);
+        // Make sure a PDF was created
         $pdf_filename = $this->output_filepath.$this->output_filename.'.pdf';
         if (!file_exists($pdf_filename)) {
             wfDebug($shell_out);
@@ -137,6 +154,7 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         // Twice more, for crossreferences.
         wfShellExec($pdflatex_cmd);
         wfShellExec($pdflatex_cmd);
+        // Return the output filename with NO file extension.
         return $this->output_filename;
     }
 
@@ -179,6 +197,22 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
             }
         }
         return $out;
+    }
+
+    /**
+     * Get the full path to the 'pdflatex' command.
+     * 
+     * @global string $wgPrintableWeRelate_PdflatexCmd Defined in LocalSettings.php
+     * @return string
+     */
+    public function getPdflatexCmd() {
+        global $wgPrintableWeRelate_PdflatexCmd;
+        $path = 'pdflatex';
+        if (isset($wgPrintableWeRelate_PdflatexCmd) && !empty($wgPrintableWeRelate_PdflatexCmd)) {
+            wfDebug('User-supplied path to pdflatex is: '.$wgPrintableWeRelate_PdflatexCmd);
+            $path = $wgPrintableWeRelate_PdflatexCmd;
+        }
+        return $path;
     }
 
     public function tex_esc($str)
