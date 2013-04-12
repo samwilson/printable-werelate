@@ -132,7 +132,7 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
             wfDebug($shell_out);
             wfDebug("PDF not generated: $pdf_filename");
             wfDebug("Command was: $pdflatex_cmd");
-            exit(1);
+            return false;
         }
         // Twice more, for crossreferences.
         wfShellExec($pdflatex_cmd);
