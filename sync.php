@@ -1,17 +1,20 @@
 <?php
 
 require_once __DIR__.'/../../maintenance/Maintenance.php';
-require_once 'init_namespaces.php';
-require_once 'TreeTraversal.php';
+require_once __DIR__.'/TreeTraversal.php';
 
 class PrintableWeRelateSync extends Maintenance {
 
     public function __construct() {
         parent::__construct();
         $this->addOption('page', 'Page from which to extract links.', true, true, 'p');
+        $this->addOption('nocache', 'Ignore the local modification time, and download anyway.', false, false, 'n');
     }
 
     public function execute() {
+        // Find all pages with <printablewerelate> tags.
+        //$pages = Pag
+        $this->nocache = $this->getOption('nocache');
         $pageWithList = $this->getOption('page');
 
         // Get starting page name, and make sure it exists.
@@ -39,7 +42,7 @@ class PrintableWeRelateSync extends Maintenance {
 
     function UpdateFromRemote(Title $title) {
         global $wgUser;
-        $this->output($title->getPrefixedText()." . . . ");
+        $this->output($title->getNsText()."\t".$title->getText()." . . . ");
 
         // Set up user @TODO make configurable
         $username = 'WeRelate bot';
@@ -63,7 +66,7 @@ class PrintableWeRelateSync extends Maintenance {
         //echo "Remote modified ".date('Y-m-d H:i', $remote_timestamp)."\n";
 
         // Compare local to remote
-        if ($remote_modified < $local_timestamp) {
+        if (!$this->nocache && $remote_modified < $local_timestamp) {
             $this->output("not modified.\n");
             return;
         }
@@ -75,7 +78,12 @@ class PrintableWeRelateSync extends Maintenance {
         if ($title->getNamespace() == NS_IMAGE) {
             $this->getAndSaveImage($title, $page_text, $summary, $user);
         } else {
-            $page->doEdit($page_text, $summary, 0, false, $user);
+            $flags = EDIT_FORCE_BOT;
+            $status = $page->doEdit($page_text, $summary, $flags, false, $user);
+            if (!$status->isOK()) {
+                $this->error($status->getWikiText(), 1);
+                exit(1);
+            }
         }
 
         $this->output("done.\n");
