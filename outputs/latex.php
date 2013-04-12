@@ -129,9 +129,9 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
         $shell_out = wfShellExec($pdflatex_cmd);
         $pdf_filename = $this->output_filepath.$this->output_filename.'.pdf';
         if (!file_exists($pdf_filename)) {
-            header("Content-type:text/plain");
-            echo $shell_out;
-            echo "\n\nPDF not generated: $pdf_filename\n\nCommand was: $pdflatex_cmd";
+            wfDebug($shell_out);
+            wfDebug("PDF not generated: $pdf_filename");
+            wfDebug("Command was: $pdflatex_cmd");
             exit(1);
         }
         // Twice more, for crossreferences.
