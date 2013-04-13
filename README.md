@@ -36,6 +36,13 @@ the following in `LocalSettings.php`:
 
     require_once "$IP/extensions/PrintableWeRelate/PrintableWeRelate.php";
 
+You can also set the following options:
+
+    $wgPrintableWeRelate_PdflatexCmd = '/path/to/pdflatex';
+
+If PDF generation is failing, you may need to increase the value of
+[$wgMaxShellMemory](http://www.mediawiki.org/wiki/Manual:$wgMaxShellMemory).
+
 Usage
 -----
 

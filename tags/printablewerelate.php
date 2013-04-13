@@ -39,7 +39,7 @@ class PrintableWeRelate_Tags_printablewerelate {
         if (count($this->ancestors)>0) {
             $out .= '<p><strong>Ancestors:</strong></p><ul>';
             foreach ($this->getAncestors() as $ancestor) {
-                $title = Title::newFromText($ancestor);
+                $title = Title::newFromText('Person:'.$ancestor);
                 $out .= '<li>'.Linker::link($title).'</li>';
             }
             $out .= '</ul>';
@@ -47,7 +47,7 @@ class PrintableWeRelate_Tags_printablewerelate {
         if (count($this->descendants)>0) {
             $out .= '<p><strong>Descendants:</strong></p><ul>';
             foreach ($this->getDescendants() as $descendant) {
-                $title = Title::newFromText($descendant);
+                $title = Title::newFromText('Person:'.$descendant);
                 $out .= '<li>'.Linker::link($title).'</li>';
             }
             $out .= '</ul>';

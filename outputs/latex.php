@@ -4,7 +4,7 @@ class PrintableWeRelate_LaTeX {
 
     private $output_filepath;
     private $output_filename;
-
+    private $images = array();
     private $people = array();
 
     /** @var PrintableWeRelate_TreeTraversal */
@@ -44,8 +44,9 @@ class PrintableWeRelate_LaTeX {
         ksort($this->people);
         $out = '
 \documentclass[a4paper,10pt]{book}
-%\usepackage[T1]{fontenc}
+\usepackage[T1]{fontenc}
 \usepackage{url}
+\usepackage{graphicx}
 \renewcommand{\thesection}{\arabic{section}}
 \setcounter{secnumdepth}{0}
 \title{Family History}
@@ -77,7 +78,14 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
             $full_name = $person->name['surname'].', '.$person->name['given'];
             $out .= "\n\n".'\section{'.$full_name.'} \label{'.PrintableWeRelate_cleanname($name).'}'."\n";
 
-//            // Parents
+            // Primary Image
+            foreach ($person->image as $image) {
+                if (isset($image['primary'])) { // && substr($image['filename'], -3)=='jpg') {
+                    $this->getImage($image['filename'], $person->name['given'].' '.$person->name['surname']);
+                }
+            }
+
+            // Parents
             $family_title = $person->child_of_family['title'];
             if (!empty($family_title)) {
                 $family = $this->tree->getObject((string)$family_title, 'family');
@@ -114,16 +122,66 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
                     }
                 } 
             }
-            
+
             // Biography
-            //var_dump($person->page_body); exit();
             $out .= "\n\n".$this->tex_esc($person->page_body);
-            
+
+            // Other images
+            $images = '';
+            foreach ($person->image as $image) {
+                $images .= $this->getImage($image['filename'], $image['caption']);
+            }
+            if (!empty($images)) {
+                $out .= "\n\n".' \textbf{Images:} '.$images.' ';
+            }
+
         }
         $out .= '
 \end{document}
 ';
         return $this->generatePdf($out);
+    }
+
+    public function getImage($filename, $caption) {
+        // Don't include images more than once.
+        $cleanname = PrintableWeRelate_cleanname($filename);
+        if (in_array($cleanname, $this->images)) {
+            return;
+        }
+
+        // Build the image page
+        $imageTitle = Title::newFromText('Image:'.$filename);
+        $filePage = new WikiFilePage($imageTitle);
+        if (!$filePage->exists()) {
+            $out = 'Image does not exist (please sync). '.$imageTitle->getPrefixedText();
+            continue;
+        }
+        $imageFile = $filePage->getFile();
+        global $wgUploadDirectory;
+        //$thumbName = $imageFile->thumbName(array('width'=>500));
+        //$imageFile->createThumb(500);
+        // Check file type
+        $permittedTypes = array('image/png', 'image/jpeg');
+        $type = $imageFile->getMimeType();
+        if (!in_array($type, $permittedTypes)) {
+            wfDebug("type is $type");
+            return "$type files are not able to be included in the PDF output.";
+        }
+
+        // 
+        $thumbPath = $wgUploadDirectory.DIRECTORY_SEPARATOR.$imageFile->getThumbRel();
+        $dir = pathinfo($thumbPath, PATHINFO_DIRNAME);
+        $basename = pathinfo($thumbPath, PATHINFO_FILENAME);
+        $ext = pathinfo($thumbPath, PATHINFO_EXTENSION);
+        $out = '\begin{figure}'."\n"
+            .'\centering'."\n"
+            .'\includegraphics[width=0.6\textwidth]{{'.$dir.DIRECTORY_SEPARATOR.$basename.'}.'.$ext.'}'."\n"
+            .'\caption{'.$caption.'}'."\n"
+            .'\label{'.$cleanname.'}'."\n"
+            .'\end{figure}'."\n"
+            .'Fig. \ref{'.$cleanname.'} (p.\pageref{'.$cleanname.'}): '.$caption."\n";
+        $this->images[] = $cleanname;
+        return $out;
     }
 
     /**
