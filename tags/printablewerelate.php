@@ -52,7 +52,7 @@ class PrintableWeRelate_Tags_printablewerelate {
             }
             $out .= '</ul>';
         }
-        $link = Linker::specialLink('PrintableWeRelate/'.$listPage->getPrefixedURL(), 'Download');
+        $link = Linker::specialLink('PrintableWeRelate/'.$listPage->getPrefixedURL(), 'exportall');
         return "$out <p>$link</p>";
     }
 }

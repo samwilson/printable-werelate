@@ -44,7 +44,7 @@ class PrintableWeRelate_LaTeX {
         ksort($this->people);
         $out = '
 \documentclass[a4paper,10pt]{book}
-\usepackage[T1]{fontenc}
+%\usepackage[T1]{fontenc}
 \usepackage{url}
 \usepackage{graphicx}
 \renewcommand{\thesection}{\arabic{section}}
@@ -284,8 +284,8 @@ To view a copy of this license, visit \url{http://creativecommons.org/licenses/b
             '/>>/'      =>  '\textgreater\textgreater ',
             '/\^/'      => '\^',
             '/#/'       => '\#',
-            '/"(\s)/'   => '\textquotedbl\ $1',
-            '/"(\S)/'   =>  '\textquotedbl $1',
+            '/"(\s)/'   => '\'\'$1',
+            '/"(\S)/'   =>  '``$1',
             '/_/'       =>  '\_',
             '/http.:\/\/(\S*)/' => '\url{$1}',
         );

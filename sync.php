@@ -7,37 +7,67 @@ class PrintableWeRelateSync extends Maintenance {
 
     public function __construct() {
         parent::__construct();
-        $this->addOption('page', 'Page from which to extract links.', true, true, 'p');
         $this->addOption('nocache', 'Ignore the local modification time, and download anyway.', false, false, 'n');
     }
 
     public function execute() {
-        // Find all pages with <printablewerelate> tags.
-        //$pages = Pag
         $this->nocache = $this->getOption('nocache');
-        $pageWithList = $this->getOption('page');
 
-        // Get starting page name, and make sure it exists.
-        $title = Title::newFromText($pageWithList);
-        $page = WikiPage::factory($title);
-        if (!$page->exists()) {
-            $this->output("The page '".$title->getPrefixedText()."' does not exist.\n");
+        // Find all pages with <printablewerelate> tags.
+        $pwrPages = $this->getPWRPages();
+        if (empty($pwrPages)) {
+            $this->output("No <printbalewerelate> elements were found in the wiki.\n");
             exit(0);
         }
 
-        // Parse the <printablewerelate> tag.
-        $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($page->getText(), 'printablewerelate');
+        // Go through the above pages to find the ancestors and descendants
+        $toTraverse = array('ancestors'=>array(), 'descendants'=>array());
+        foreach ($pwrPages as $title) {
+            $this->output("\n** Using starting points found in ".$title->getPrefixedText()." **\n\n");
+            $page = WikiPage::factory($title);
+            // Parse the <printablewerelate> tag
+            $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($page->getText(), 'printablewerelate');
+            foreach (array('ancestors', 'descendants') as $dir) {
+                foreach ($pwr->$dir as $person) {
+                    // Prevent duplicates. Cast to strings.
+                    $toTraverse[$dir]["$person"] = "$person";
+                }
+            }
+        }
 
         // Traverse up and down from the supplied links.
         $werelate = new PrintableWeRelate_TreeTraversal();
         $werelate->registerCallback(array($this, 'UpdateFromRemote'));
         foreach (array('ancestors', 'descendants') as $dir) {
-            foreach ($pwr->$dir as $person) {
+            foreach ($toTraverse[$dir] as $person) {
                 $this->output("Traversing all $dir of $person.\n\n");
                 $werelate->$dir($person);
             }
         }
 
+    }
+
+    /**
+     * Get an array of Titles of pages containing <printablewerelate> elements.
+     * 
+     * @return array Array of Title objects
+     */
+    private function getPWRPages() {
+        $dbr = wfGetDB( DB_SLAVE );
+        $page_table = $dbr->tableName('page');
+        $revision_table = $dbr->tableName('revision');
+        $text_table = $dbr->tableName('text');
+        $sql = "SELECT page.page_namespace, page_title
+            FROM $page_table
+                INNER JOIN $revision_table ON page.page_latest = revision.rev_id
+                INNER JOIN $text_table ON revision.rev_text_id = text.old_id
+            WHERE text.old_text LIKE '%<printablewerelate%</printablewerelate>'";
+        $res = $dbr->query($sql);
+        $out = array();
+        foreach( $res as $row ) {
+            $out[] = Title::newFromText($row->page_title, $row->page_namespace);
+        }
+        return $out;
     }
 
     function UpdateFromRemote(Title $title) {

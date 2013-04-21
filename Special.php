@@ -42,8 +42,12 @@ class SpecialPrintableWeRelate extends SpecialPage {
             }
         }
         $filename = $latex->to_file();
-        $link = $wgScriptPath.'/images/printablewerelate/'.$filename.'.pdf';
-        $this->getOutput()->addHTML('<p><a href="'.$link.'">Download PDF</a></p>');
+        if (!$filename) {
+            $this->getOutput()->addHTML('<p class="error">Error: unable to export</p>');
+        } else {
+            $link = $wgScriptPath.'/images/printablewerelate/'.$filename.'.pdf';
+            $this->getOutput()->addHTML('<p><a href="'.$link.'">Download PDF</a></p>');
+        }
     }
 
     public function visitTitle(Title $title) {
