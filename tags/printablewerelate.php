@@ -1,15 +1,6 @@
 <?php
 
-//<form action="">
-//    <fieldset>
-//        <legend>Printable WeRelate</legend>
-//        
-//    </fieldset>
-//</form>
-
-require_once __DIR__.'/../TreeTraversal.php';
-
-class PrintableWeRelate_Tags_printablewerelate {
+class PrintableWeRelate_Tags_printablewerelate extends PrintableWeRelate_Tag {
 
     protected $tag_name = 'printablewerelate';
 
@@ -17,8 +8,10 @@ class PrintableWeRelate_Tags_printablewerelate {
 
     protected $descendants = array();
 
-    public function __construct($text) {
-        $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($text, 'printablewerelate');
+    public function __construct($input, $args, Parser $parser, $frame) {
+        parent::__construct($input, $args, $parser, $frame);
+        $page = new WikiPage($this->parser->getTitle());
+        $pwr = PrintableWeRelate_TreeTraversal::pageTextToObj($page->getText(), 'printablewerelate');
         foreach (array('ancestors', 'descendants') as $dir) {
             foreach ($pwr->$dir as $person) {
                 $this->{$dir}[] = (string) $person;
@@ -34,7 +27,7 @@ class PrintableWeRelate_Tags_printablewerelate {
         return $this->descendants;
     }
 
-    public function toHtml(Title $listPage) {
+    public function toHtml() {
         $out = '';
         if (count($this->ancestors)>0) {
             $out .= '<p><strong>Ancestors:</strong></p><ul>';
@@ -52,7 +45,7 @@ class PrintableWeRelate_Tags_printablewerelate {
             }
             $out .= '</ul>';
         }
-        $link = Linker::specialLink('PrintableWeRelate/'.$listPage->getPrefixedURL(), 'exportall');
+        $link = Linker::specialLink('PrintableWeRelate/'.$this->parser->getTitle()->getPrefixedURL(), 'exportall');
         return "$out <p>$link</p>";
     }
 }

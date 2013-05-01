@@ -20,6 +20,13 @@ $wgAutoloadClasses['PrintableWeRelate_Tags_family'] = __DIR__.'/tags/family.php'
 $wgAutoloadClasses['PrintableWeRelate_LaTeX'] = __DIR__.'/outputs/latex.php';
 $wgSpecialPages['PrintableWeRelate'] = 'SpecialPrintableWeRelate';
 
+$wgResourceModules['ext.PrintableWeRelate'] = array(
+        //'scripts' => 'scripts.js',
+        'styles' => 'styles.css',
+        //'localBasePath' => __DIR__,
+        //'remoteExtPath' => 'PrintableWeRelate'
+);
+
 /**
  * Set up namespaces: Person and Family.
  */
@@ -27,16 +34,22 @@ define("NS_PRINTABLEWERELATE_PERSON", 500);
 define("NS_PRINTABLEWERELATE_PERSON_TALK", 501);
 define("NS_PRINTABLEWERELATE_FAMILY", 502);
 define("NS_PRINTABLEWERELATE_FAMILY_TALK", 503);
+define("NS_PRINTABLEWERELATE_PLACE", 504);
+define("NS_PRINTABLEWERELATE_PLACE_TALK", 505);
 $wgContentNamespaces[] = NS_PRINTABLEWERELATE_FAMILY;
 $wgContentNamespaces[] = NS_PRINTABLEWERELATE_PERSON;
+$wgContentNamespaces[] = NS_PRINTABLEWERELATE_PLACE;
 $wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_PERSON] = true;
 $wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_FAMILY] = true;
+$wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_PLACE] = true;
 $wgHooks['CanonicalNamespaces'][] = 'PrintableWerelate_CanonicalNamespaces';
 function PrintableWerelate_CanonicalNamespaces( &$list ) {
     $list[NS_PRINTABLEWERELATE_PERSON] = 'Person';
     $list[NS_PRINTABLEWERELATE_PERSON_TALK] = 'Person_talk';
     $list[NS_PRINTABLEWERELATE_FAMILY] = 'Family';
     $list[NS_PRINTABLEWERELATE_FAMILY_TALK] = 'Family_talk';
+    $list[NS_PRINTABLEWERELATE_PLACE] = 'Place';
+    $list[NS_PRINTABLEWERELATE_PLACE_TALK] = 'Place_talk';
     return true;
 }
 
@@ -62,11 +75,14 @@ class PrintableWeRelateTags {
         $parser = array_shift($arguments);
         $frame = array_shift($arguments);
 
-        $rewrapped = "<$tag>$input</$tag>";
         $classname = "PrintableWeRelate_Tags_$tag";
-        $pwr = new $classname($rewrapped);
-        $title = $parser->getTitle();
-        return $pwr->toHtml($title);
+        $pwr = new $classname($input, $args, $parser, $frame);
+        //$title = $parser->getTitle();
+        //$html = $pwr->toHtml();
+        //$wikitext = $pwr->toWiki($title);
+        //$output = $parser->recursiveTagParse( $wikitext, $frame );
+        //return '<div class="printablewerelate-'.$tag.'">' . $output . '</div>';
+        return $pwr->toHtml(); // array($pwr->toHtml(), 'markerType'=>'nowiki');
     }
 
 }

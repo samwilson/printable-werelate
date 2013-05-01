@@ -2,14 +2,19 @@
 
 abstract class PrintableWeRelate_Tag {
 
-    protected $text;
+    /** @var Parser */
+    protected $parser;
 
-    public function __construct($text) {
-        $this->text = $text;
+    public function __construct($input, $args, $parser, $frame) {
+        $this->input = $input;
+        $this->args = $args;
+        $this->parser = $parser;
+        $this->frame = $frame;
     }
 
     public function toHtml() {
-        return htmlspecialchars($this->text);
+        return '';
+        //return htmlspecialchars($this->text);
     }
 
 }
