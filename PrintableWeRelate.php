@@ -15,6 +15,7 @@ $wgAutoloadClasses['SpecialPrintableWeRelate'] = __DIR__.'/Special.php';
 $wgAutoloadClasses['PrintableWeRelate_TreeTraversal'] = __DIR__.'/TreeTraversal.php';
 $wgAutoloadClasses['PrintableWeRelate_Tag'] = __DIR__.'/tags/tag.php';
 $wgAutoloadClasses['PrintableWeRelate_Tags_printablewerelate'] = __DIR__.'/tags/printablewerelate.php';
+$wgAutoloadClasses['PrintableWeRelate_Tags_show_sources_images_notes'] = __DIR__.'/tags/show_sources_images_notes.php';
 $wgAutoloadClasses['PrintableWeRelate_Tags_person'] = __DIR__.'/tags/person.php';
 $wgAutoloadClasses['PrintableWeRelate_Tags_family'] = __DIR__.'/tags/family.php';
 $wgAutoloadClasses['PrintableWeRelate_LaTeX'] = __DIR__.'/outputs/latex.php';
@@ -36,12 +37,20 @@ define("NS_PRINTABLEWERELATE_FAMILY", 502);
 define("NS_PRINTABLEWERELATE_FAMILY_TALK", 503);
 define("NS_PRINTABLEWERELATE_PLACE", 504);
 define("NS_PRINTABLEWERELATE_PLACE_TALK", 505);
+define("NS_PRINTABLEWERELATE_SOURCE", 506);
+define("NS_PRINTABLEWERELATE_SOURCE_TALK", 507);
+define("NS_PRINTABLEWERELATE_MYSOURCE", 508);
+define("NS_PRINTABLEWERELATE_MYSOURCE_TALK", 509);
 $wgContentNamespaces[] = NS_PRINTABLEWERELATE_FAMILY;
 $wgContentNamespaces[] = NS_PRINTABLEWERELATE_PERSON;
 $wgContentNamespaces[] = NS_PRINTABLEWERELATE_PLACE;
+$wgContentNamespaces[] = NS_PRINTABLEWERELATE_SOURCE;
+$wgContentNamespaces[] = NS_PRINTABLEWERELATE_MYSOURCE;
 $wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_PERSON] = true;
 $wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_FAMILY] = true;
 $wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_PLACE] = true;
+$wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_SOURCE] = true;
+$wgNamespacesToBeSearchedDefault[NS_PRINTABLEWERELATE_MYSOURCE] = true;
 $wgHooks['CanonicalNamespaces'][] = 'PrintableWerelate_CanonicalNamespaces';
 function PrintableWerelate_CanonicalNamespaces( &$list ) {
     $list[NS_PRINTABLEWERELATE_PERSON] = 'Person';
@@ -50,6 +59,10 @@ function PrintableWerelate_CanonicalNamespaces( &$list ) {
     $list[NS_PRINTABLEWERELATE_FAMILY_TALK] = 'Family_talk';
     $list[NS_PRINTABLEWERELATE_PLACE] = 'Place';
     $list[NS_PRINTABLEWERELATE_PLACE_TALK] = 'Place_talk';
+    $list[NS_PRINTABLEWERELATE_SOURCE] = 'Source';
+    $list[NS_PRINTABLEWERELATE_SOURCE_TALK] = 'Source_talk';
+    $list[NS_PRINTABLEWERELATE_MYSOURCE] = 'MySource';
+    $list[NS_PRINTABLEWERELATE_MYSOURCE_TALK] = 'MySource_talk';
     return true;
 }
 
@@ -60,7 +73,7 @@ $tags = new PrintableWeRelateTags();
 $wgHooks['ParserFirstCallInit'][] = array($tags, 'init');
 class PrintableWeRelateTags {
 
-    protected $tags = array('printablewerelate', 'person', 'family');
+    protected $tags = array('printablewerelate', 'person', 'family', 'show_sources_images_notes');
 
     public function init(Parser $parser) {
         foreach ($this->tags as $tag) {

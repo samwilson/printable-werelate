@@ -72,13 +72,14 @@ class PrintableWeRelateSync extends Maintenance {
 
     function UpdateFromRemote(Title $title) {
         global $wgUser;
-        $this->output($title->getNsText()."\t".$title->getText()." . . . ");
+        $msg = sprintf("%-15s %s . . . ", $title->getNsText(), $title->getText());
+        $this->output($msg);
 
         // Set up user @TODO make configurable
         $username = 'WeRelate bot';
         $user = User::newFromName($username);
         $wgUser = & $user;
-        $summary = 'Importing from http://www.werelate.org';
+        $summary = 'Importing from http://www.werelate.org/wiki/'.$title->getPrefixedURL();
 
         // Get local timestamp
         $page = WikiPage::factory($title);

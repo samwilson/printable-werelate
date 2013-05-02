@@ -73,9 +73,28 @@ class PrintableWeRelate_Tags_person extends PrintableWeRelate_Tag {
             $families[] = $family_links;
         }
 
+        // Sources
+        $sources = array();
+        foreach ($this->person->source_citation as $source) {
+            //echo '<pre>'.print_r($source,true).'</pre>';
+            $title = Title::newFromText((string)$source['title']);
+            $link = Linker::link($title);
+            $sources[(string)$source['id']] = array(
+                'title' => $source['title'],
+                'title_obj' => $title,
+                'page' => $source['page'],
+                'link' => $link,
+                //'parsed' => $this->parser->recursiveTagParse('<ref name="'.$source['id'].'">'.$link.'</ref>'),
+            );
+        }
+
         $facts = array();
+        $birthDate = '';
         $birthPlace = '';
+        $deathDate = '';
+        $deathPlace = '';
         foreach ($this->person->event_fact as $fact) {
+            //echo '<pre>'.print_r($fact,true).'</pre>';
             // Build general facts array
             $type = (string) $fact['type'];
             $dateSort = date('Y-m-d H:i:s', strtotime($fact['date']));
@@ -93,6 +112,7 @@ class PrintableWeRelate_Tags_person extends PrintableWeRelate_Tag {
                 'sortDate' => $dateSort,
                 'place' => $place,
                 'desc' => $desc,
+                'sources' => explode(', ', $fact['sources']),
             );
             // Define some convenience variables.
             if ($type=='Birth') {

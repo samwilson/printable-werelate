@@ -87,7 +87,20 @@ class PrintableWeRelate_TreeTraversal {
             }
         }
 
-        // Source Citations @TODO
+        // Source Citations
+        if (isset($person->source_citation)) {
+            foreach ($person->source_citation as $source) {
+                if (!isset($source['title']) OR empty($source['title'])) {
+                    continue;
+                }
+                $title = Title::newFromText((string)$source['title']);
+                $is_source = $title->getNamespace() == NS_PRINTABLEWERELATE_SOURCE;
+                $is_mysource = $title->getNamespace() == NS_PRINTABLEWERELATE_MYSOURCE;
+                if ($is_source || $is_mysource) {
+                    $this->get_page($title->getText(), $title->getNsText());
+                }
+            }
+        }
 
         return $person;
     }

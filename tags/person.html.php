@@ -37,7 +37,15 @@ W. <?php echo $family['wife_link'] ?>
 <table class="wikitable">
 <?php foreach ($facts as $fact): ?>
 <tr>
-<th><?php echo $fact['type'] ?></th>
+<th><?php echo $fact['type'] ?><?php
+foreach ($fact['sources'] as $s) {
+    if(isset($sources[$s])) {
+        $is_source = $sources[$s]['title_obj']->getNamespace() == NS_PRINTABLEWERELATE_SOURCE;
+        $is_mysource = $sources[$s]['title_obj']->getNamespace() == NS_PRINTABLEWERELATE_MYSOURCE;
+        $title = ($is_source || $is_mysource) ? '[['.$sources[$s]['title'].']]' : $sources[$s]['title'];
+        echo $this->parser->recursiveTagParse('<ref name="'.$s.'">'.$title.'</ref>');
+    }
+} ?></th>
 <td><span title="<?php echo $fact['sortDate'] ?>"><?php echo $fact['date'] ?></span></td>
 <td><?php echo $fact['place'] ?></td>
 <td><?php echo $fact['desc'] ?></td>
