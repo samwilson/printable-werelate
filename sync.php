@@ -91,6 +91,9 @@ class PrintableWeRelateSync extends Maintenance {
         $url = 'http://werelate.org/w/index.php?title='.$ns.':'.$title->getPartialURL().'&action=raw';
         // Get remote timestamp
         $request = $this->getHttpRequest($url);
+        if (!$request) {
+            return;
+        }
         $response = $request->getResponseHeaders();
         $remote_modified = (isset($response['last-modified'][0])) ? $response['last-modified'][0] : 0;
         $remote_timestamp = strtotime($remote_modified);
@@ -113,7 +116,6 @@ class PrintableWeRelateSync extends Maintenance {
             $status = $page->doEdit($page_text, $summary, $flags, false, $user);
             if (!$status->isOK()) {
                 $this->error($status->getWikiText(), 1);
-                exit(1);
             }
         }
 
@@ -145,8 +147,8 @@ class PrintableWeRelateSync extends Maintenance {
         $httpRequest = MWHttpRequest::factory($url, $options);
         $status = $httpRequest->execute();
         if (!$status->isOK()) {
-            $this->error($status->getWikiText(), 1);
-            exit(1);
+            $this->error($status->getWikiText());
+            return false;
         }
         return $httpRequest;
     }

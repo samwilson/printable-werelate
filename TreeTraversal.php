@@ -94,10 +94,12 @@ class PrintableWeRelate_TreeTraversal {
                     continue;
                 }
                 $title = Title::newFromText((string)$source['title']);
-                $is_source = $title->getNamespace() == NS_PRINTABLEWERELATE_SOURCE;
-                $is_mysource = $title->getNamespace() == NS_PRINTABLEWERELATE_MYSOURCE;
-                if ($is_source || $is_mysource) {
-                    $this->get_page($title->getText(), $title->getNsText());
+                if ($title) {
+                    $is_source = $title->getNamespace() == NS_PRINTABLEWERELATE_SOURCE;
+                    $is_mysource = $title->getNamespace() == NS_PRINTABLEWERELATE_MYSOURCE;
+                    if ($is_source || $is_mysource) {
+                        $this->get_page($title->getText(), $title->getNsText());
+                    }
                 }
             }
         }
